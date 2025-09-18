@@ -1,6 +1,28 @@
 # 宝可梦睡眠食谱查询工具
 
-这是一个专为宝可梦睡眠游戏设计的食谱查询与食材管理工具，帮助玩家更方便地查看和管理游戏中的食谱和食材库存。
+这是一个专为宝可梦睡眠游戏设计的食谱查询与食材管理工具，帮助玩家更方便地查看和管理游戏中的食谱和食材库存。本工具提供了MySQL和SQLite两个版本，以满足不同用户的需求。
+
+## 项目概述
+
+此工具允许宝可梦睡眠玩家：
+- 浏览、搜索和筛选游戏中的所有食谱
+- 查看每个食谱所需的食材及其数量
+- 管理玩家的食材库存
+- 标记食谱的制作状态
+- 检查哪些食谱的食材已充足
+
+## 版本说明
+
+项目包含两个版本，功能相同但使用不同的数据库后端：
+
+1. **MySQL版本** (`mysql版本.py`)
+   - 使用MySQL数据库存储数据
+   - 适合有MySQL服务器或需要多设备共享数据的用户
+
+2. **SQLite版本** (`sqllite版本.py`)
+   - 使用本地SQLite数据库文件存储数据
+   - 无需安装额外数据库软件，更适合单机使用
+   - 支持打包成可执行文件
 
 ## 功能特性
 
@@ -14,16 +36,22 @@
 ### 食材管理
 - 查看所有食材的当前库存
 - 双击食材数量直接编辑库存
+- 点击列标题可以对食材进行排序
 
 ## 技术栈
+
+### 共同依赖
 - Python 3.x
-- Tkinter（GUI界面）
-- PyMySQL（数据库连接）
-- MySQL（数据存储）
+- Tkinter（GUI界面，Python标准库）
+
+### 版本特定依赖
+- MySQL版本：PyMySQL
+- SQLite版本：sqlite3（Python标准库）
 
 ## 数据库结构
 
-### 主要表结构
+两个版本使用相同的表结构：
+
 1. **recipes** - 存储食谱信息
    - id: 食谱ID
    - name: 食谱名称
@@ -51,39 +79,59 @@
 
 ## 安装说明
 
-### 前提条件
-1. 安装Python 3.x
-2. 安装MySQL数据库
-3. 创建名为`pokemonsleep`的数据库和相关表
+### MySQL版本安装
 
-### 安装依赖
-```bash
-pip install pymysql
-```
+1. **前提条件**
+   - 安装Python 3.x
+   - 安装MySQL数据库
+   - 创建名为`pokemonsleep`的数据库和相关表
 
-### 数据库配置
-1. 在MySQL中创建数据库：`CREATE DATABASE pokemonsleep CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
-2. 导入相关表结构和数据（需要自行准备或从游戏中导出）
-3. 修改代码中的数据库连接信息（如果与默认配置不同）
+2. **安装依赖**
+   ```bash
+   pip install pymysql
+   ```
 
-```python
-# 找到并修改以下代码段中的数据库连接参数
-self.conn = pymysql.connect(
-    host='localhost',
-    port=3306,
-    user='root',
-    password='root',
-    database='pokemonsleep',
-    charset='utf8mb4',
-    cursorclass=pymysql.cursors.DictCursor
-)
-```
+3. **数据库配置**
+   - 修改代码中的数据库连接信息
+   
+   ```python
+   # 找到并修改以下代码段中的数据库连接参数
+   self.conn = pymysql.connect(
+       host="localhost",  # MySQL服务器地址
+       port=3306,         # MySQL端口
+       user="root",       # 用户名
+       password="root",   # 密码
+       database="pokemonsleep",  # 数据库名
+       charset="utf8mb4",
+       cursorclass=pymysql.cursors.DictCursor,
+   )
+   ```
+
+### SQLite版本安装
+
+1. **前提条件**
+   - 安装Python 3.x
+   - 准备`pokemonsleep.sqlite`数据库文件
+
+2. **安装依赖**
+   - 无需额外安装依赖，sqlite3是Python标准库的一部分
+
+3. **数据库配置**
+   - 确保`pokemonsleep.sqlite`文件与程序位于同一目录下
+   - 程序会自动查找并连接到该文件
 
 ## 使用方法
 
 ### 启动程序
+
+根据您选择的版本，运行相应的命令：
+
 ```bash
-python recipe_app.py
+# MySQL版本
+python mysql版本.py
+
+# SQLite版本
+python sqllite版本.py
 ```
 
 ### 食谱查询
@@ -98,21 +146,34 @@ python recipe_app.py
 2. 双击任意食材的数量列，可以直接编辑库存数量
 3. 点击列标题可以对食材进行排序
 
+## 版本差异
+
+1. **数据库连接**
+   - MySQL版本：连接到远程或本地MySQL服务器
+   - SQLite版本：连接到本地sqlite文件，支持单机独立运行
+
+2. **SQL语法**
+   - MySQL版本使用`%s`作为参数占位符
+   - SQLite版本使用`?`作为参数占位符
+
+3. **打包支持**
+   - SQLite版本包含了针对PyInstaller等打包工具的支持
+   - MySQL版本需要额外配置数据库连接
+
 ## 常见问题
 
 ### 数据库连接失败
-- 检查MySQL服务是否启动
-- 确认数据库名称、用户名和密码是否正确
-- 检查防火墙设置是否允许连接
+- MySQL版本：检查MySQL服务是否启动，确认数据库名称、用户名和密码是否正确
+- SQLite版本：确认`pokemonsleep.sqlite`文件是否存在于正确位置
 
 ### 食材数量无法编辑
 - 确保双击的是数量列
 - 输入的数量必须是有效的数字（0-1000之间）
 
 ## 注意事项
-- 本工具需要连接到本地MySQL数据库，请确保数据库服务正常运行
-- 程序中的数据库用户名和密码为默认值，建议在生产环境中修改为更安全的凭据
-- 食材状态标记功能依赖于数据库中的is_made字段
+- MySQL版本的数据库用户名和密码为示例值，建议在生产环境中修改为更安全的凭据
+- SQLite版本的数据库文件需要用户自行准备或导入
+- 程序在退出时会自动关闭数据库连接
 
 ## 更新日志
 
@@ -121,6 +182,7 @@ python recipe_app.py
 - 优化食谱查询界面
 - 增加右键菜单标记食谱状态
 - 改进食材管理功能
+- 同时提供MySQL和SQLite两个版本
 
 ## 开发者信息
 
