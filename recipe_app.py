@@ -1,22 +1,10 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
-import sqlite3
-import os
+import pymysql
 
 
 class RecipeApp:
     def __init__(self):
-        # 数据库路径
-        self.db_path = "pokemonsleep.sqlite"
-
-        if not os.path.exists(self.db_path):
-            messagebox.showerror("错误", f"未找到数据库文件：{self.db_path}")
-            return
-
-        # 连接 SQLite 数据库
-        self.conn = sqlite3.connect(self.db_path)
-        self.conn.row_factory = sqlite3.Row  # 支持 dict 风格访问
-
         # 初始化主窗口
         self.root = tk.Tk()
         self.root.title("宝可梦睡眠食谱查询 v2.0")
@@ -29,6 +17,23 @@ class RecipeApp:
         # 创建选项卡容器
         notebook = ttk.Notebook(self.root)
         notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        # 初始化数据库连接
+        try:
+            self.conn = pymysql.connect(
+                host="**.mysql.com*",
+                port=3306,
+                user="root",
+                password="root",
+                database="pokemonsleep",
+                charset="utf8mb4",
+                cursorclass=pymysql.cursors.DictCursor,
+            )
+            print("数据库连接成功")
+        except pymysql.Error as e:
+            messagebox.showerror("数据库错误", f"连接失败: {str(e)}")
+            self.root.destroy()
+            return
 
         # ========== 食谱标签页 ==========
         recipe_frame = ttk.Frame(notebook)
@@ -137,7 +142,12 @@ class RecipeApp:
 
     def on_closing(self):
         # 窗口关闭时关闭数据库连接
-        self.conn.close()
+        if hasattr(self, "conn"):
+            try:
+                self.conn.close()
+                print("数据库连接已关闭")
+            except:
+                pass
         self.root.destroy()
 
     def _configure_columns(self):
@@ -207,11 +217,11 @@ class RecipeApp:
         params = []
 
         if category_id != "0":
-            query += " AND d.id = ?"
+            query += " AND d.id = %s"
             params.append(category_id)
 
         if keyword:
-            query += " AND r.name LIKE ?"
+            query += " AND r.name LIKE %s"
             params.append(f"%{keyword}%")
 
         query += " ORDER BY r.sort DESC"
@@ -256,7 +266,7 @@ class RecipeApp:
                     SELECT i.name, ri.quantity_required, i.quantity
                     FROM recipe_ingredients ri
                     JOIN ingredients i ON ri.ingredient_id = i.id
-                    WHERE ri.recipe_id = ?
+                    WHERE ri.recipe_id = %s
                 """,
                     (recipe_id,),
                 )
@@ -288,7 +298,7 @@ class RecipeApp:
                         SELECT ri.quantity_required, i.quantity
                         FROM recipe_ingredients ri
                         JOIN ingredients i ON ri.ingredient_id = i.id
-                        WHERE ri.recipe_id = ?
+                        WHERE ri.recipe_id = %s
                     """,
                         (recipe_id,),
                     )
@@ -331,7 +341,7 @@ class RecipeApp:
         try:
             with self.conn.cursor() as cursor:
                 cursor.execute(
-                    "UPDATE recipes SET is_made = ? WHERE id = ?",
+                    "UPDATE recipes SET is_made = %s WHERE id = %s",
                     (new_status, recipe_id),
                 )
             self.conn.commit()
@@ -375,7 +385,7 @@ class RecipeApp:
             try:
                 with self.conn.cursor() as cursor:
                     cursor.execute(
-                        "UPDATE ingredients SET quantity = ? WHERE name = ?",
+                        "UPDATE ingredients SET quantity = %s WHERE name = %s",
                         (new_quantity, values[0]),
                     )
                 self.conn.commit()
